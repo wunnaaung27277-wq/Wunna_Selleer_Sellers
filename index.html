@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>User Order | Kpay Service</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>User Order Site</h1>
+        <p>Place your order. No login required.</p>
+      </div>
+      <span class="badge">Public</span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2 style="margin:0;font-size:16px">Order Form</h2>
+
+        <label>Service Package</label>
+        <div class="packages" id="packages">
+          <div class="pkg active" data-value="Kpay Only (200,000 MMK)">
+            <h3>Kpay Only</h3>
+            <div class="price">200,000 MMK</div>
+            <small>Registration for Kpay only.</small>
+          </div>
+
+          <div class="pkg" data-value="Kpay + Wave (250,000 MMK)">
+            <h3>Kpay + Wave</h3>
+            <div class="price">250,000 MMK</div>
+            <small>Registration for Kpay + Wave.</small>
+          </div>
+        </div>
+
+        <label for="phone">Enter phone number for Kpay registration.</label>
+        <input id="phone" type="tel" placeholder="e.g. 09xxxxxxxxx" />
+
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" placeholder="Any details you'd like to add..."></textarea>
+
+        <label>Upload Screenshot/Receipt (Required)</label>
+        <div class="filebox">
+          <input id="receipt" type="file" accept="image/*" />
+          <div id="fileInfo" style="margin-top:8px"><small>No file selected</small></div>
+        </div>
+
+        <button id="confirmBtn" class="btn" disabled>Confirm</button>
+        <div id="msg" class="alert" style="display:none"></div>
+
+        <div class="contact">
+          <div><b>Contact Admin</b></div>
+          <div style="margin-top:6px">
+            Telegram: <span class="badge">@Wunna_Aung_2006</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0;font-size:16px">How it works</h2>
+        <div class="alert">
+          <ol style="margin:0; padding-left:18px">
+            <li>Select a package.</li>
+            <li>Enter phone number.</li>
+            <li><b>Upload screenshot/receipt (required).</b></li>
+            <li>Confirm to place order.</li>
+          </ol>
+        </div>
+        <div class="alert">
+          Orders are saved in your browser storage for demo.  
+          For real use, connect to a backend/database later.
+        </div>
+        <a class="adminLink" href="admin.html">Go to Admin Site →</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="user.js"></script>
+</body>
+</html>
