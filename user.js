@@ -1,160 +1,229 @@
-// ===== Supabase config =====
+// =====================
+// 1) Supabase config
+// =====================
 const SUPABASE_URL = "https://fptldpkahsxifzxmzvjd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_29Mtd0gHH03lSTbJF6YEww_kuRE-nHC";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ===== UI elements =====
-const confirmBtn = document.getElementById("confirmBtn");
-const statusEl = document.getElementById("status");
-const receiptInput = document.getElementById("receipt");
-const previewBox = document.getElementById("previewBox");
-const previewImg = document.getElementById("previewImg");
-const previewName = document.getElementById("previewName");
-const removeReceiptBtn = document.getElementById("removeReceipt");
+// =====================
+// 2) UI elements
+// =====================
+const pkgCards = Array.from(document.querySelectorAll(".pkg"));
+const pkgHint = document.getElementById("pkgHint");
+
 const phoneEl = document.getElementById("phone");
+const contactLinkEl = document.getElementById("contactLink");
 const notesEl = document.getElementById("notes");
 
-let selectedPackage = document.querySelector('input[name="package"]:checked').value;
+const receiptEl = document.getElementById("receipt");
+const thumbEl = document.getElementById("thumb");
+const fileLabel = document.getElementById("fileLabel");
+const uploadStatus = document.getElementById("uploadStatus");
+
+const confirmBtn = document.getElementById("confirmBtn");
+const goAdminBtn = document.getElementById("goAdminBtn");
+
+const kpayName = document.getElementById("kpayName");
+const kpayNo = document.getElementById("kpayNo");
+const copyNameBtn = document.getElementById("copyNameBtn");
+const copyNoBtn = document.getElementById("copyNoBtn");
+
+const toast = document.getElementById("toast");
+
+// =====================
+// 3) State
+// =====================
+let selectedPackage = null;
+let selectedPrice = null;
 let selectedFile = null;
+let previewURL = null;
 
-// ===== Copy helpers =====
-document.querySelectorAll("[data-copy]").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const sel = btn.getAttribute("data-copy");
-    const el = document.querySelector(sel);
-    if (!el) return;
-    await navigator.clipboard.writeText(el.value);
-    toast("Copied!");
+// =====================
+// 4) Helpers
+// =====================
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1200);
+}
+
+function normalizePhone(p) {
+  return (p || "").replace(/\s+/g, "");
+}
+
+function isValidContactLink(v) {
+  const s = (v || "").trim();
+  if (!s) return false;
+  // simple check: must include t.me or facebook or fb.com or start with http(s)
+  return /^https?:\/\//i.test(s) || /t\.me\/|facebook\.com\/|fb\.com\//i.test(s);
+}
+
+function setConfirmEnabled(enabled) {
+  if (enabled) {
+    confirmBtn.classList.remove("btnDisabled");
+  } else {
+    confirmBtn.classList.add("btnDisabled");
+  }
+}
+
+function validateForm() {
+  const phoneOk = normalizePhone(phoneEl.value).length >= 9;
+  const pkgOk = !!selectedPackage;
+  const fileOk = !!selectedFile;
+  const linkOk = isValidContactLink(contactLinkEl.value);
+
+  setConfirmEnabled(pkgOk && phoneOk && fileOk && linkOk);
+}
+
+// =====================
+// 5) Copy-only fields
+// =====================
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("Copied ✅");
+  } catch {
+    // fallback
+    const tmp = document.createElement("textarea");
+    tmp.value = text;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand("copy");
+    tmp.remove();
+    showToast("Copied ✅");
+  }
+}
+
+copyNameBtn.addEventListener("click", () => copyText(kpayName.value));
+copyNoBtn.addEventListener("click", () => copyText(kpayNo.value));
+
+// =====================
+// 6) Package select + smooth slide hint
+// =====================
+pkgCards.forEach(card => {
+  card.addEventListener("click", () => {
+    pkgCards.forEach(c => c.classList.remove("selected"));
+    card.classList.add("selected");
+
+    selectedPackage = card.dataset.package;
+    selectedPrice = Number(card.dataset.price || 0);
+
+    pkgHint.classList.add("open");
+    setTimeout(() => pkgHint.classList.remove("open"), 1200);
+
+    validateForm();
   });
 });
 
-document.querySelectorAll("[data-copy-text]").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const txt = btn.getAttribute("data-copy-text");
-    await navigator.clipboard.writeText(txt);
-    toast("Copied!");
-  });
-});
-
-// ===== Package select animation =====
-document.querySelectorAll(".pkg").forEach(pkg => {
-  pkg.addEventListener("click", () => {
-    document.querySelectorAll(".pkg").forEach(p => p.classList.remove("active"));
-    pkg.classList.add("active");
-    const radio = pkg.querySelector('input[type="radio"]');
-    radio.checked = true;
-    selectedPackage = radio.value;
-  });
-});
-
-// ===== Receipt preview + required confirm =====
-receiptInput.addEventListener("change", () => {
-  const file = receiptInput.files?.[0];
+// =====================
+// 7) Receipt upload preview thumbnail
+// =====================
+receiptEl.addEventListener("change", () => {
+  const file = receiptEl.files && receiptEl.files[0];
   selectedFile = file || null;
 
-  if (!selectedFile) {
-    previewBox.classList.add("hidden");
-    confirmBtn.disabled = true;
+  if (previewURL) URL.revokeObjectURL(previewURL);
+  previewURL = null;
+
+  if (!file) {
+    thumbEl.innerHTML = `<span style="opacity:.7;font-size:12px;">No preview</span>`;
+    uploadStatus.textContent = "No file selected";
+    fileLabel.textContent = "PNG/JPG recommended";
+    validateForm();
     return;
   }
 
-  previewBox.classList.remove("hidden");
-  previewName.textContent = `${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)`;
+  fileLabel.textContent = file.name;
+  uploadStatus.textContent = "Preview ready ✅";
 
-  const url = URL.createObjectURL(selectedFile);
-  previewImg.src = url;
+  previewURL = URL.createObjectURL(file);
+  thumbEl.innerHTML = "";
+  const img = document.createElement("img");
+  img.src = previewURL;
+  img.alt = "Receipt preview";
+  thumbEl.appendChild(img);
 
-  confirmBtn.disabled = false; // required action done
+  validateForm();
 });
 
-removeReceiptBtn.addEventListener("click", () => {
-  receiptInput.value = "";
-  selectedFile = null;
-  previewBox.classList.add("hidden");
-  confirmBtn.disabled = true;
-  toast("Removed receipt");
-});
+// =====================
+// 8) Confirm submit
+// =====================
+async function uploadReceiptToSupabase(file) {
+  // unique path
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const safeExt = ext.replace(/[^a-z0-9]/g, "");
+  const path = `receipts/${Date.now()}_${Math.random().toString(16).slice(2)}.${safeExt}`;
 
-// ===== Confirm submit =====
+  // upload to bucket "receipts"
+  const { error: upErr } = await supabaseClient
+    .storage
+    .from("receipts")
+    .upload(path, file, { upsert: false });
+
+  if (upErr) throw new Error("Receipt upload failed: " + upErr.message);
+
+  // public URL
+  const { data } = supabaseClient.storage.from("receipts").getPublicUrl(path);
+  if (!data?.publicUrl) throw new Error("Failed to get public URL");
+  return data.publicUrl;
+}
+
+async function insertOrder(row) {
+  const { error } = await supabaseClient.from("Orders").insert(row);
+  if (error) throw new Error("Insert failed: " + error.message);
+}
+
 confirmBtn.addEventListener("click", async () => {
+  validateForm();
+  if (confirmBtn.classList.contains("btnDisabled")) {
+    showToast("Fill required fields ❗");
+    return;
+  }
+
+  confirmBtn.textContent = "Saving...";
+  confirmBtn.classList.add("btnDisabled");
+
   try {
-    setBusy(true);
-    statusEl.textContent = "Uploading receipt...";
+    // 1) upload receipt
+    uploadStatus.textContent = "Uploading receipt...";
+    const receiptUrl = await uploadReceiptToSupabase(selectedFile);
 
-    const phone = phoneEl.value.trim();
-    if (!phone) throw new Error("Please enter a phone number.");
-    if (!selectedFile) throw new Error("Receipt upload is required.");
-
-    // 1) Upload to storage bucket "receipts"
-    const ext = (selectedFile.name.split(".").pop() || "jpg").toLowerCase();
-    const filePath = `receipts/${Date.now()}_${Math.random().toString(16).slice(2)}.${ext}`;
-
-    const { error: uploadErr } = await supabase
-      .storage
-      .from("receipts")
-      .upload(filePath, selectedFile, { upsert: false });
-
-    if (uploadErr) throw uploadErr;
-
-    // 2) Get public URL (works because you made read policy)
-    const { data: publicData } = supabase
-      .storage
-      .from("receipts")
-      .getPublicUrl(filePath);
-
-    const receipt_url = publicData.publicUrl;
-
-    statusEl.textContent = "Saving order...";
-
-    // 3) Insert to Orders table
-    const payload = {
+    // 2) insert order
+    uploadStatus.textContent = "Saving order...";
+    const row = {
       package: selectedPackage,
-      phone,
-      receipt_url,
-      created_at: new Date().toISOString(),
-      notes: notesEl.value.trim() || null
+      phone: normalizePhone(phoneEl.value),
+      receipt_url: receiptUrl,
+      contact_link: (contactLinkEl.value || "").trim(),
+      notes: (notesEl.value || "").trim()
     };
 
-    const { error: insertErr } = await supabase
-      .from("Orders")
-      .insert(payload);
+    await insertOrder(row);
 
-    if (insertErr) throw insertErr;
+    uploadStatus.textContent = "Done ✅ Order submitted";
+    showToast("Submitted ✅");
 
-    toast("✅ Order placed successfully!");
-    statusEl.textContent = "Order saved ✅";
-
-    // Reset
-    phoneEl.value = "";
-    notesEl.value = "";
-    receiptInput.value = "";
-    selectedFile = null;
-    previewBox.classList.add("hidden");
-    confirmBtn.disabled = true;
+    // reset (optional)
+    // location.reload();
   } catch (e) {
     console.error(e);
-    statusEl.textContent = "";
-    toast("❌ " + (e?.message || "Something went wrong"));
+    uploadStatus.textContent = "Error: " + (e.message || "Unknown error");
+    showToast("Error ❗");
   } finally {
-    setBusy(false);
+    confirmBtn.textContent = "Confirm";
+    validateForm();
   }
 });
 
-function setBusy(isBusy) {
-  confirmBtn.disabled = isBusy || !selectedFile;
-  confirmBtn.classList.toggle("loading", isBusy);
-}
+// =====================
+// 9) Go admin
+// =====================
+goAdminBtn.addEventListener("click", () => {
+  location.href = "./admin.html";
+});
 
-function toast(msg) {
-  statusEl.textContent = msg;
-  setTimeout(() => {
-    if (statusEl.textContent === msg) statusEl.textContent = "";
-  }, 3000);
-}
-
-// ===== KPay logo animation (subtle pulse) =====
-const kpayLogo = document.getElementById("kpayLogo");
-if (kpayLogo) {
-  setInterval(() => kpayLogo.classList.toggle("pulse"), 1200);
-}
+// live validation
+phoneEl.addEventListener("input", validateForm);
+contactLinkEl.addEventListener("input", validateForm);
