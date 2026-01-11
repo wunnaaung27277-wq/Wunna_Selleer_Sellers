@@ -56,10 +56,10 @@ function isValidContactLink(v) {
   const s = (v || "").trim();
   if (!s) return false;
 
-  // allow @username (telegram) OR full links
+  // allow @username (telegram)
   if (/^@\w{3,}$/.test(s)) return true;
 
-  // allow phone-like contact too (optional)
+  // allow phone-like contact (optional)
   if (/^\+?\d{7,15}$/.test(s.replace(/\s+/g, ""))) return true;
 
   // allow URLs
@@ -70,13 +70,14 @@ function isValidContactLink(v) {
 
   return false;
 }
-}
 
 function setConfirmEnabled(enabled) {
   if (enabled) {
     confirmBtn.classList.remove("btnDisabled");
+    confirmBtn.disabled = false;
   } else {
     confirmBtn.classList.add("btnDisabled");
+    confirmBtn.disabled = true;
   }
 }
 
@@ -112,14 +113,14 @@ copyNameBtn.addEventListener("click", () => copyText(kpayName.value));
 copyNoBtn.addEventListener("click", () => copyText(kpayNo.value));
 
 // =====================
-// 6) Package select + smooth slide hint
+// 6) Package select + smooth hint
 // =====================
-pkgCards.forEach(card => {
+pkgCards.forEach((card) => {
   card.addEventListener("click", () => {
-    pkgCards.forEach(c => c.classList.remove("selected"));
+    pkgCards.forEach((c) => c.classList.remove("selected"));
     card.classList.add("selected");
 
-    selectedPackage = card.dataset.package;
+    selectedPackage = card.dataset.package || null;
     selectedPrice = Number(card.dataset.price || 0);
 
     pkgHint.classList.add("open");
@@ -160,63 +161,42 @@ receiptEl.addEventListener("change", () => {
   validateForm();
 });
 
-// ✅ ဒီနေရာမှာ ထည့်
-receiptEl.addEventListener("input", () => {
-  const file = receiptEl.files && receiptEl.files[0];
-  if (file) selectedFile = file;
-  validateForm();
-});
-
-  fileLabel.textContent = file.name;
-  uploadStatus.textContent = "Preview ready ✅";
-
-  previewURL = URL.createObjectURL(file);
-  thumbEl.innerHTML = "";
-  const img = document.createElement("img");
-  img.src = previewURL;
-  img.alt = "Receipt preview";
-  thumbEl.appendChild(img);
-
-  validateForm();
-});
-
 // =====================
 // 8) Confirm submit
 // =====================
 async function uploadReceiptToSupabase(file) {
-  // unique path
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
   const safeExt = ext.replace(/[^a-z0-9]/g, "");
   const path = `receipts/${Date.now()}_${Math.random().toString(16).slice(2)}.${safeExt}`;
 
-  // upload to bucket "receipts"
   const { error: upErr } = await supabaseClient
     .storage
     .from("receipts")
     .upload(path, file, { upsert: false });
 
-  if (upErr) throw new Error("Receipt upload failed: " + upErr.message);
+  if (upErr) {
+    throw new Error("Receipt upload failed: " + upErr.message);
+  }
 
-  // public URL
   const { data } = supabaseClient.storage.from("receipts").getPublicUrl(path);
   if (!data?.publicUrl) throw new Error("Failed to get public URL");
   return data.publicUrl;
 }
 
-async function insertOrder(row) {
-  const { error } = await supabaseClient.from("Orders").insert(row);
+async function insertOrder(rowObj) {
+  const { error } = await supabaseClient.from("Orders").insert([rowObj]);
   if (error) throw new Error("Insert failed: " + error.message);
 }
 
 confirmBtn.addEventListener("click", async () => {
   validateForm();
-  if (confirmBtn.classList.contains("btnDisabled")) {
+  if (confirmBtn.disabled) {
     showToast("Fill required fields ❗");
     return;
   }
 
   confirmBtn.textContent = "Saving...";
-  confirmBtn.classList.add("btnDisabled");
+  setConfirmEnabled(false);
 
   try {
     // 1) upload receipt
@@ -225,12 +205,15 @@ confirmBtn.addEventListener("click", async () => {
 
     // 2) insert order
     uploadStatus.textContent = "Saving order...";
+
+    // ⚠️ Orders table columns must match these keys!
     const row = {
       package: selectedPackage,
       phone: normalizePhone(phoneEl.value),
       receipt_url: receiptUrl,
       contact_link: (contactLinkEl.value || "").trim(),
-      notes: (notesEl.value || "").trim()
+      notes: (notesEl.value || "").trim(),
+      price: selectedPrice || 0,
     };
 
     await insertOrder(row);
@@ -238,11 +221,11 @@ confirmBtn.addEventListener("click", async () => {
     uploadStatus.textContent = "Done ✅ Order submitted";
     showToast("Submitted ✅");
 
-    // reset (optional)
+    // optional reset
     // location.reload();
   } catch (e) {
     console.error(e);
-    uploadStatus.textContent = "Error: " + (e.message || "Unknown error");
+    uploadStatus.textContent = "Error: " + (e?.message || "Unknown error");
     showToast("Error ❗");
   } finally {
     confirmBtn.textContent = "Confirm";
@@ -260,3 +243,6 @@ goAdminBtn.addEventListener("click", () => {
 // live validation
 phoneEl.addEventListener("input", validateForm);
 contactLinkEl.addEventListener("input", validateForm);
+
+// initial
+validateForm();
