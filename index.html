@@ -1,82 +1,142 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>User Order | Kpay Service</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order • Wunna Seller</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>User Order Site</h1>
-        <p>Place your order. No login required.</p>
+  <div class="bg"></div>
+
+  <main class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logoBlob" aria-hidden="true"></div>
+        <div>
+          <div class="brandTitle">Wunna Seller • Order</div>
+          <div class="brandSub">User order site (no login required)</div>
+        </div>
       </div>
-      <span class="badge">Public</span>
-    </div>
+      <a class="linkBtn" href="admin.html">Admin</a>
+    </header>
 
-    <div class="grid">
-      <div class="card">
-        <h2 style="margin:0;font-size:16px">Order Form</h2>
+    <!-- KPay Copy-only card -->
+    <section class="card kpayCard">
+      <div class="kpayHead">
+        <div class="kpayLogoWrap">
+          <div class="kpayLogo" id="kpayLogo">K</div>
+        </div>
+        <div class="kpayMeta">
+          <div class="muted">PAY TYPE</div>
+          <div class="kpayType">Kpay only</div>
+        </div>
+        <div class="pill">Copy only</div>
+      </div>
 
-        <label>Service Package</label>
-        <div class="packages" id="packages">
-          <div class="pkg active" data-value="Kpay Only (200,000 MMK)">
-            <h3>Kpay Only</h3>
-            <div class="price">200,000 MMK</div>
-            <small>Registration for Kpay only.</small>
-          </div>
-
-          <div class="pkg" data-value="Kpay + Wave (250,000 MMK)">
-            <h3>Kpay + Wave</h3>
-            <div class="price">250,000 MMK</div>
-            <small>Registration for Kpay + Wave.</small>
+      <div class="fieldRow">
+        <div class="field">
+          <label>Kpay Name</label>
+          <div class="copyBox">
+            <input id="kpayName" value="Ma May Thet Oo" readonly />
+            <button class="copyBtn" data-copy="#kpayName">Copy</button>
           </div>
         </div>
+      </div>
 
+      <div class="fieldRow">
+        <div class="field">
+          <label>Kpay No</label>
+          <div class="copyBox">
+            <input id="kpayNo" value="09775767821" readonly />
+            <button class="copyBtn" data-copy="#kpayNo">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">Please copy the name/number above. (You cannot edit these fields.)</div>
+    </section>
+
+    <!-- Order form -->
+    <section class="card">
+      <h2 class="sectionTitle">SERVICE PACKAGES</h2>
+
+      <div class="packages" role="radiogroup" aria-label="Service packages">
+        <label class="pkg active" data-value="Kpay Only (200,000 MMK)">
+          <input type="radio" name="package" value="Kpay Only (200,000 MMK)" checked/>
+          <div class="pkgInner">
+            <div>
+              <div class="pkgName">Kpay Only</div>
+              <div class="pkgPrice">200,000 MMK</div>
+            </div>
+            <div class="badge">Popular</div>
+          </div>
+          <div class="pkgGlow"></div>
+        </label>
+
+        <label class="pkg" data-value="Kpay + Wave (250,000 MMK)">
+          <input type="radio" name="package" value="Kpay + Wave (250,000 MMK)"/>
+          <div class="pkgInner">
+            <div>
+              <div class="pkgName">Kpay + Wave</div>
+              <div class="pkgPrice">250,000 MMK</div>
+            </div>
+            <div class="badge alt">Porpular</div>
+          </div>
+          <div class="pkgGlow"></div>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
         <label for="phone">Enter phone number for Kpay registration.</label>
-        <input id="phone" type="tel" placeholder="e.g. 09xxxxxxxxx" />
+        <input id="phone" placeholder="09XXXXXXXXX" inputmode="numeric" />
+        <div class="help">Example: 09xxxxxxxxx</div>
+      </div>
 
+      <div class="field">
         <label for="notes">Notes (optional)</label>
-        <textarea id="notes" placeholder="Any details you'd like to add..."></textarea>
+        <textarea id="notes" rows="3" placeholder="Anything we should know?"></textarea>
+      </div>
 
-        <label>Upload Screenshot/Receipt (Required)</label>
-        <div class="filebox">
+      <div class="field">
+        <label>Upload screenshot/receipt (required)</label>
+
+        <div class="uploadWrap">
           <input id="receipt" type="file" accept="image/*" />
-          <div id="fileInfo" style="margin-top:8px"><small>No file selected</small></div>
+          <div class="uploadHint">PNG/JPG recommended</div>
         </div>
 
-        <button id="confirmBtn" class="btn" disabled>Confirm</button>
-        <div id="msg" class="alert" style="display:none"></div>
-
-        <div class="contact">
-          <div><b>Contact Admin</b></div>
-          <div style="margin-top:6px">
-            Telegram: <span class="badge">@Wunna_Aung_2006</span>
+        <div id="previewBox" class="previewBox hidden">
+          <img id="previewImg" alt="Receipt preview"/>
+          <div class="previewMeta">
+            <div id="previewName" class="previewName"></div>
+            <button id="removeReceipt" class="ghostBtn" type="button">Remove</button>
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <h2 style="margin:0;font-size:16px">How it works</h2>
-        <div class="alert">
-          <ol style="margin:0; padding-left:18px">
-            <li>Select a package.</li>
-            <li>Enter phone number.</li>
-            <li><b>Upload screenshot/receipt (required).</b></li>
-            <li>Confirm to place order.</li>
-          </ol>
+      <section class="contactAdmin">
+        <div class="contactTitle">Contact Admin</div>
+        <div class="contactRow">
+          <span class="tg">@Wunna_Aung_2006</span>
+          <button class="copyMini" data-copy-text="@Wunna_Aung_2006">Copy</button>
         </div>
-        <div class="alert">
-          Orders are saved in your browser storage for demo.  
-          For real use, connect to a backend/database later.
-        </div>
-        <a class="adminLink" href="admin.html">Go to Admin Site →</a>
-      </div>
-    </div>
-  </div>
+      </section>
 
+      <div class="actions">
+        <span id="status" class="status"></span>
+        <div class="rightActions">
+          <a class="ghostBtn" href="admin.html">Go to Admin</a>
+          <button id="confirmBtn" class="primaryBtn" disabled>Confirm</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="user.js"></script>
 </body>
 </html>
