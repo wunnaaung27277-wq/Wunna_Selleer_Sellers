@@ -55,8 +55,21 @@ function normalizePhone(p) {
 function isValidContactLink(v) {
   const s = (v || "").trim();
   if (!s) return false;
-  // simple check: must include t.me or facebook or fb.com or start with http(s)
-  return /^https?:\/\//i.test(s) || /t\.me\/|facebook\.com\/|fb\.com\//i.test(s);
+
+  // allow @username (telegram) OR full links
+  if (/^@\w{3,}$/.test(s)) return true;
+
+  // allow phone-like contact too (optional)
+  if (/^\+?\d{7,15}$/.test(s.replace(/\s+/g, ""))) return true;
+
+  // allow URLs
+  if (/^https?:\/\//i.test(s)) return true;
+
+  // allow raw patterns (without https)
+  if (/t\.me\/|facebook\.com\/|fb\.com\//i.test(s)) return true;
+
+  return false;
+}
 }
 
 function setConfirmEnabled(enabled) {
@@ -133,6 +146,26 @@ receiptEl.addEventListener("change", () => {
     validateForm();
     return;
   }
+
+  fileLabel.textContent = file.name;
+  uploadStatus.textContent = "Preview ready ✅";
+
+  previewURL = URL.createObjectURL(file);
+  thumbEl.innerHTML = "";
+  const img = document.createElement("img");
+  img.src = previewURL;
+  img.alt = "Receipt preview";
+  thumbEl.appendChild(img);
+
+  validateForm();
+});
+
+// ✅ ဒီနေရာမှာ ထည့်
+receiptEl.addEventListener("input", () => {
+  const file = receiptEl.files && receiptEl.files[0];
+  if (file) selectedFile = file;
+  validateForm();
+});
 
   fileLabel.textContent = file.name;
   uploadStatus.textContent = "Preview ready ✅";
