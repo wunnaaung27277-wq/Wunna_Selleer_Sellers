@@ -1,81 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin | Orders</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin • Wunna Seller</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-  <div class="container">
-    <div class="top">
-      <h1>Admin Site</h1>
-      <span class="tag">Protected</span>
-    </div>
-    <p class="sub">Login required to view orders.</p>
+  <div class="bg"></div>
 
-    <!-- Login Card -->
-    <div class="card" id="loginCard">
-      <h2>Admin Login</h2>
-
-      <label class="lbl" for="user">Username</label>
-      <input id="user" type="text" placeholder="admin" />
-
-      <label class="lbl" for="pass">Password</label>
-      <input id="pass" type="password" placeholder="••••••••" />
-
-      <button id="loginBtn" class="btn">Login</button>
-      <div id="loginMsg" class="msg" style="display:none"></div>
-
-      <div class="contact">
-        <b>Contact Admin</b><br/>
-        Telegram: <span class="tag">@Wunna_Aung_2006</span>
+  <main class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logoBlob" aria-hidden="true"></div>
+        <div>
+          <div class="brandTitle">Admin Panel</div>
+          <div class="brandSub">Login required</div>
+        </div>
       </div>
+      <a class="linkBtn" href="index.html">User Site</a>
+    </header>
 
-      <a class="adminLink" href="index.html">← Back to User Order</a>
-    </div>
+    <section class="card">
+      <div id="authBox">
+        <h2 class="sectionTitle">Admin Login</h2>
 
-    <!-- Orders Card -->
-    <div class="card" id="ordersCard" style="display:none">
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between">
-        <h2 style="margin:0">Orders List</h2>
-        <div style="display:flex; gap:10px; flex-wrap:wrap">
-          <button id="refreshBtn" class="btn" style="width:auto">Refresh</button>
-          <button id="clearBtn" class="btn" style="width:auto; background:transparent; color:#e5e7eb; border:1px solid rgba(255,255,255,.14)">
-            Clear demo data
-          </button>
-          <button id="logoutBtn" class="btn" style="width:auto; background:transparent; color:#e5e7eb; border:1px solid rgba(255,255,255,.14)">
-            Logout
-          </button>
+        <div class="field">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="admin@email.com"/>
+        </div>
+
+        <div class="field">
+          <label>Password</label>
+          <input id="password" type="password" placeholder="••••••••"/>
+        </div>
+
+        <div class="actions">
+          <span id="authStatus" class="status"></span>
+          <div class="rightActions">
+            <button id="loginBtn" class="primaryBtn">Login</button>
+          </div>
         </div>
       </div>
 
-      <div id="empty" class="msg" style="display:none; margin-top:12px">No orders yet.</div>
+      <div id="panel" class="hidden">
+        <div class="panelHead">
+          <h2 class="sectionTitle">Orders List</h2>
+          <div class="panelBtns">
+            <button id="refreshBtn" class="ghostBtn" type="button">Refresh</button>
+            <button id="logoutBtn" class="dangerBtn" type="button">Logout</button>
+          </div>
+        </div>
 
-      <div style="overflow:auto; margin-top:12px">
-        <table class="table" id="ordersTable" style="width:100%; border-collapse:collapse">
-          <thead>
-            <tr>
-              <th style="padding:10px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; color:#9ca3af">Date</th>
-              <th style="padding:10px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; color:#9ca3af">Package</th>
-              <th style="padding:10px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; color:#9ca3af">Phone</th>
-              <th style="padding:10px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; color:#9ca3af">Receipt</th>
-              <th style="padding:10px; border-bottom:1px solid rgba(255,255,255,.12); text-align:left; color:#9ca3af">Notes</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
+        <div class="field">
+          <label>Search</label>
+          <input id="search" placeholder="Search phone / package..." />
+        </div>
+
+        <div id="orders" class="orders"></div>
+        <div id="empty" class="empty hidden">No orders yet.</div>
       </div>
+    </section>
+  </main>
 
-      <div class="contact">
-        <b>Contact Admin</b><br/>
-        Telegram: <span class="tag">@Wunna_Aung_2006</span>
-      </div>
-
-      <a class="adminLink" href="index.html">← Back to User Order</a>
-    </div>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="admin.js"></script>
 </body>
 </html>
