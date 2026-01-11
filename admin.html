@@ -3,77 +3,62 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Admin • Wunna Seller</title>
+  <title>Wunna Seller • Admin</title>
   <link rel="stylesheet" href="./styles.css"/>
 </head>
 <body>
-  <div class="container adminWrap">
+  <div class="container">
     <div class="topbar">
       <div class="brand">
-        <div class="logoWrap" aria-hidden="true"><div class="logo">AD</div></div>
+        <div class="logoWrap" aria-hidden="true"><div class="logo">WS</div></div>
         <div>
-          <div class="h1">Admin Dashboard</div>
-          <div class="sub">Login required (Supabase Auth)</div>
+          <div class="h1">Wunna Seller • Admin</div>
+          <div class="sub">Login required</div>
         </div>
       </div>
-      <a class="btn btnGhost btnSmall" href="./index.html">User Site</a>
+      <a class="btn btnGhost btnSmall" href="./index.html">Back</a>
     </div>
 
-    <!-- LOGIN -->
+    <!-- LOGIN CARD -->
     <div class="card" id="loginCard">
       <div class="sectionTitle" style="margin-top:0">Admin Login</div>
 
       <div class="field">
-        <label>Admin Email</label>
-        <input id="adminEmail" class="input" type="email" value="wunnaaung27277@gmail.com"/>
+        <label>Email</label>
+        <input id="adminEmail" class="input" type="email" placeholder="admin@email.com" />
       </div>
 
       <div class="field">
         <label>Password</label>
-        <input id="adminPassword" class="input" type="password" value="212026"/>
+        <input id="adminPassword" class="input" type="password" placeholder="••••••••" />
       </div>
 
-      <div class="row" style="margin-top:12px">
+      <div class="row" style="gap:12px;justify-content:flex-end">
         <button class="btn btnPrimary" id="loginBtn">Login</button>
-        <button class="btn btnGhost" id="logoutBtn" style="display:none">Logout</button>
       </div>
 
-      <div class="helper" id="loginStatus">Tip: Supabase Auth → Users မှာ ဒီ email/password ကို create ထားရပါမယ်။</div>
+      <div class="helper" id="loginMsg" style="margin-top:10px;opacity:.85"></div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="card" id="dashCard" style="display:none">
-      <div class="row" style="justify-content:space-between; margin-bottom:10px">
+    <!-- ADMIN PANEL -->
+    <div class="card" id="adminPanel" style="display:none">
+      <div class="row" style="justify-content:space-between;align-items:center">
         <div>
           <div class="sectionTitle" style="margin:0">Orders</div>
-          <div class="sub" id="meLabel">Signed in</div>
+          <div class="helper" id="countText" style="margin-top:6px">Loading…</div>
         </div>
-        <button class="btn btnGhost btnSmall" id="refreshBtn">Refresh</button>
+        <div class="row" style="gap:10px">
+          <button class="btn btnGhost btnSmall" id="refreshBtn">Refresh</button>
+          <button class="btn btnSmall" id="logoutBtn">Logout</button>
+        </div>
       </div>
 
-      <div style="overflow:auto">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>Package</th>
-              <th>Phone</th>
-              <th>Contact Link</th>
-              <th>Receipt</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody id="ordersBody">
-            <tr><td colspan="6">No data</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="helper" id="adminMsg"></div>
+      <div id="ordersList" style="margin-top:14px;display:grid;gap:12px"></div>
+      <div class="helper" id="adminMsg" style="margin-top:12px"></div>
     </div>
   </div>
 
-  <div class="toast" id="toast">Copied</div>
+  <div class="toast" id="toast">OK</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./admin.js"></script>
