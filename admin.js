@@ -1,108 +1,148 @@
-// ====== Demo credentials (Change these) ======
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "123456";
+const SUPABASE_URL = "https://fptldpkahsxifzxmzvjd.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_29Mtd0gHH03lSTbJF6YEww_kuRE-nHC";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Elements
-const loginCard = document.getElementById("loginCard");
-const ordersCard = document.getElementById("ordersCard");
+// UI
+const authBox = document.getElementById("authBox");
+const panel = document.getElementById("panel");
+const authStatus = document.getElementById("authStatus");
 
-const userEl = document.getElementById("user");
-const passEl = document.getElementById("pass");
+const emailEl = document.getElementById("email");
+const passEl = document.getElementById("password");
 const loginBtn = document.getElementById("loginBtn");
-const loginMsg = document.getElementById("loginMsg");
 
-const tbody = document.getElementById("tbody");
-const empty = document.getElementById("empty");
-
-const refreshBtn = document.getElementById("refreshBtn");
-const clearBtn = document.getElementById("clearBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const refreshBtn = document.getElementById("refreshBtn");
+const ordersEl = document.getElementById("orders");
+const emptyEl = document.getElementById("empty");
+const searchEl = document.getElementById("search");
 
-// Helpers
-function setMsg(type, text){
-  loginMsg.style.display = "block";
-  loginMsg.className = `msg ${type}`;
-  loginMsg.textContent = text;
-}
+let cache = [];
 
-function getOrders(){
-  return JSON.parse(localStorage.getItem("orders") || "[]");
-}
+loginBtn.addEventListener("click", async () => {
+  try {
+    authStatus.textContent = "Logging in...";
+    const email = emailEl.value.trim();
+    const password = passEl.value;
 
-function setLoggedIn(val){
-  localStorage.setItem("adminLoggedIn", val ? "1" : "0");
-}
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
 
-function isLoggedIn(){
-  return localStorage.getItem("adminLoggedIn") === "1";
-}
+    authStatus.textContent = "✅ Logged in";
+    await refresh();
+  } catch (e) {
+    console.error(e);
+    authStatus.textContent = "❌ " + (e?.message || "Login failed");
+  }
+});
 
-function showOrdersUI(){
-  loginCard.style.display = "none";
-  ordersCard.style.display = "block";
-  renderOrders();
-}
+logoutBtn.addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  cache = [];
+  render([]);
+  showAuth();
+});
 
-function showLoginUI(){
-  ordersCard.style.display = "none";
-  loginCard.style.display = "block";
-}
+refreshBtn.addEventListener("click", refresh);
 
-function renderOrders(){
-  const orders = getOrders();
-  tbody.innerHTML = "";
+searchEl.addEventListener("input", () => {
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = cache.filter(o =>
+    (o.phone || "").toLowerCase().includes(q) ||
+    (o.package || "").toLowerCase().includes(q)
+  );
+  render(filtered);
+});
 
-  if (!orders.length){
-    empty.style.display = "block";
+async function refresh() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session) return showAuth();
+
+  showPanel();
+
+  const { data, error } = await supabase
+    .from("Orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    // If policies are correct, non-admin users will see policy error / empty
+    authStatus.textContent = "❌ " + (error.message || "Cannot fetch orders");
+    render([]);
     return;
   }
-  empty.style.display = "none";
 
-  for (const o of orders){
-    const tr = document.createElement("tr");
+  cache = data || [];
+  render(cache);
+}
 
-    const date = new Date(o.createdAt).toLocaleString();
-    tr.innerHTML = `
-      <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08)">${date}</td>
-      <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08)">${o.package || "-"}</td>
-      <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08)">${o.phone || "-"}</td>
-      <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08)">${o.receiptFileName || "-"}</td>
-      <td style="padding:10px; border-bottom:1px solid rgba(255,255,255,.08)">${o.notes || "-"}</td>
+function render(list) {
+  ordersEl.innerHTML = "";
+  emptyEl.classList.toggle("hidden", list.length !== 0);
+
+  list.forEach(o => {
+    const item = document.createElement("div");
+    item.className = "orderItem";
+
+    const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : "-";
+
+    item.innerHTML = `
+      <div class="orderTop">
+        <div>
+          <div class="orderTitle">${escapeHtml(o.package || "-")}</div>
+          <div class="orderSub">📞 ${escapeHtml(o.phone || "-")} • ${escapeHtml(dateStr)}</div>
+        </div>
+        <button class="copyMini" data-copy="${escapeHtml(o.phone || "")}">Copy Phone</button>
+      </div>
+
+      ${o.notes ? `<div class="orderNotes">${escapeHtml(o.notes)}</div>` : ""}
+
+      ${o.receipt_url ? `
+        <div class="orderReceipt">
+          <img src="${escapeHtml(o.receipt_url)}" alt="receipt" />
+          <a class="linkBtn small" target="_blank" rel="noreferrer" href="${escapeHtml(o.receipt_url)}">Open</a>
+        </div>
+      ` : `<div class="orderNotes muted">No receipt URL</div>`}
     `;
-    tbody.appendChild(tr);
-  }
+
+    item.querySelector('[data-copy]')?.addEventListener("click", async (e) => {
+      const txt = e.currentTarget.getAttribute("data-copy") || "";
+      if (!txt) return;
+      await navigator.clipboard.writeText(txt);
+      authStatus.textContent = "Copied phone ✅";
+      setTimeout(() => (authStatus.textContent = ""), 1500);
+    });
+
+    ordersEl.appendChild(item);
+  });
 }
 
-// Events
-loginBtn.addEventListener("click", () => {
-  const u = userEl.value.trim();
-  const p = passEl.value;
+function showAuth() {
+  authBox.classList.remove("hidden");
+  panel.classList.add("hidden");
+}
 
-  if (u === ADMIN_USER && p === ADMIN_PASS){
-    setLoggedIn(true);
-    setMsg("ok", "Login successful.");
-    showOrdersUI();
+function showPanel() {
+  authBox.classList.add("hidden");
+  panel.classList.remove("hidden");
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// On load: check session
+(async function init() {
+  const { data } = await supabase.auth.getSession();
+  if (data?.session) {
+    showPanel();
+    await refresh();
   } else {
-    setMsg("err", "Invalid username or password.");
+    showAuth();
   }
-});
-
-refreshBtn.addEventListener("click", renderOrders);
-
-clearBtn.addEventListener("click", () => {
-  localStorage.removeItem("orders");
-  renderOrders();
-});
-
-logoutBtn.addEventListener("click", () => {
-  setLoggedIn(false);
-  showLoginUI();
-  setMsg("ok", "Logged out.");
-});
-
-// Auto-login if already logged in on this device
-if (isLoggedIn()){
-  showOrdersUI();
-} else {
-  showLoginUI();
-}
+})();
