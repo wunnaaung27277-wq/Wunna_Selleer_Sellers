@@ -1,148 +1,142 @@
 const SUPABASE_URL = "https://fptldpkahsxifzxmzvjd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_29Mtd0gHH03lSTbJF6YEww_kuRE-nHC";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // UI
-const authBox = document.getElementById("authBox");
-const panel = document.getElementById("panel");
-const authStatus = document.getElementById("authStatus");
+const loginCard = document.getElementById("loginCard");
+const dashCard = document.getElementById("dashCard");
 
-const emailEl = document.getElementById("email");
-const passEl = document.getElementById("password");
+const adminEmail = document.getElementById("adminEmail");
+const adminPassword = document.getElementById("adminPassword");
+
 const loginBtn = document.getElementById("loginBtn");
-
 const logoutBtn = document.getElementById("logoutBtn");
-const refreshBtn = document.getElementById("refreshBtn");
-const ordersEl = document.getElementById("orders");
-const emptyEl = document.getElementById("empty");
-const searchEl = document.getElementById("search");
+const loginStatus = document.getElementById("loginStatus");
 
-let cache = [];
+const refreshBtn = document.getElementById("refreshBtn");
+const ordersBody = document.getElementById("ordersBody");
+const adminMsg = document.getElementById("adminMsg");
+const meLabel = document.getElementById("meLabel");
+
+const toast = document.getElementById("toast");
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1200);
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("Copied ✅");
+  } catch {
+    showToast("Copy failed");
+  }
+}
+
+// ====== Auth session check ======
+async function loadSession() {
+  const { data } = await supabaseClient.auth.getSession();
+  const session = data?.session;
+  if (session) {
+    loginCard.style.display = "none";
+    dashCard.style.display = "block";
+    logoutBtn.style.display = "inline-block";
+    meLabel.textContent = `Signed in: ${session.user.email}`;
+    await loadOrders();
+  } else {
+    loginCard.style.display = "block";
+    dashCard.style.display = "none";
+    logoutBtn.style.display = "none";
+  }
+}
 
 loginBtn.addEventListener("click", async () => {
-  try {
-    authStatus.textContent = "Logging in...";
-    const email = emailEl.value.trim();
-    const password = passEl.value;
+  const email = (adminEmail.value || "").trim();
+  const password = adminPassword.value || "";
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  // ✅ မင်းလိုချင်တဲ့ hard-coded credential ကိုစစ်ပေးမယ်
+  // (UI ထဲမှာ default ထည့်ထားပြီးသား)
+  if (email !== "wunnaaung27277@gmail.com" || password !== "212026") {
+    loginStatus.textContent = "❌ Email or password wrong";
+    return;
+  }
+
+  loginStatus.textContent = "Logging in...";
+  loginBtn.disabled = true;
+
+  try {
+    // ✅ Supabase Auth login
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
-    authStatus.textContent = "✅ Logged in";
-    await refresh();
+    loginStatus.textContent = "✅ Login success";
+    await loadSession();
   } catch (e) {
     console.error(e);
-    authStatus.textContent = "❌ " + (e?.message || "Login failed");
+    loginStatus.textContent =
+      "❌ Login failed. Supabase Auth → Users မှာ ဒီ user create မထားသေးလား စစ်ပါ။ (" + (e.message || "") + ")";
+  } finally {
+    loginBtn.disabled = false;
   }
 });
 
 logoutBtn.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  cache = [];
-  render([]);
-  showAuth();
+  await supabaseClient.auth.signOut();
+  adminMsg.textContent = "";
+  await loadSession();
 });
 
-refreshBtn.addEventListener("click", refresh);
+refreshBtn.addEventListener("click", loadOrders);
 
-searchEl.addEventListener("input", () => {
-  const q = searchEl.value.trim().toLowerCase();
-  const filtered = cache.filter(o =>
-    (o.phone || "").toLowerCase().includes(q) ||
-    (o.package || "").toLowerCase().includes(q)
-  );
-  render(filtered);
-});
+// ====== Orders fetch (requires SELECT policy for authenticated) ======
+async function loadOrders() {
+  adminMsg.textContent = "Loading...";
+  ordersBody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
 
-async function refresh() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData?.session) return showAuth();
+  try {
+    const { data, error } = await supabaseClient
+      .from("Orders")
+      .select("created_at, package, phone, contact_link, receipt_url, notes")
+      .order("created_at", { ascending: false })
+      .limit(200);
 
-  showPanel();
+    if (error) throw error;
 
-  const { data, error } = await supabase
-    .from("Orders")
-    .select("*")
-    .order("created_at", { ascending: false });
+    if (!data || data.length === 0) {
+      ordersBody.innerHTML = `<tr><td colspan="6">No orders yet</td></tr>`;
+      adminMsg.textContent = "No data";
+      return;
+    }
 
-  if (error) {
-    // If policies are correct, non-admin users will see policy error / empty
-    authStatus.textContent = "❌ " + (error.message || "Cannot fetch orders");
-    render([]);
-    return;
-  }
+    ordersBody.innerHTML = "";
+    data.forEach(row => {
+      const created = row.created_at ? new Date(row.created_at).toLocaleString() : "-";
+      const link = row.contact_link ? `<a class="pill" href="${row.contact_link}" target="_blank" rel="noreferrer">Open</a>` : "-";
+      const receipt = row.receipt_url ? `<a class="pill" href="${row.receipt_url}" target="_blank" rel="noreferrer">View</a>` : "-";
+      const notes = row.notes ? row.notes : "-";
 
-  cache = data || [];
-  render(cache);
-}
-
-function render(list) {
-  ordersEl.innerHTML = "";
-  emptyEl.classList.toggle("hidden", list.length !== 0);
-
-  list.forEach(o => {
-    const item = document.createElement("div");
-    item.className = "orderItem";
-
-    const dateStr = o.created_at ? new Date(o.created_at).toLocaleString() : "-";
-
-    item.innerHTML = `
-      <div class="orderTop">
-        <div>
-          <div class="orderTitle">${escapeHtml(o.package || "-")}</div>
-          <div class="orderSub">📞 ${escapeHtml(o.phone || "-")} • ${escapeHtml(dateStr)}</div>
-        </div>
-        <button class="copyMini" data-copy="${escapeHtml(o.phone || "")}">Copy Phone</button>
-      </div>
-
-      ${o.notes ? `<div class="orderNotes">${escapeHtml(o.notes)}</div>` : ""}
-
-      ${o.receipt_url ? `
-        <div class="orderReceipt">
-          <img src="${escapeHtml(o.receipt_url)}" alt="receipt" />
-          <a class="linkBtn small" target="_blank" rel="noreferrer" href="${escapeHtml(o.receipt_url)}">Open</a>
-        </div>
-      ` : `<div class="orderNotes muted">No receipt URL</div>`}
-    `;
-
-    item.querySelector('[data-copy]')?.addEventListener("click", async (e) => {
-      const txt = e.currentTarget.getAttribute("data-copy") || "";
-      if (!txt) return;
-      await navigator.clipboard.writeText(txt);
-      authStatus.textContent = "Copied phone ✅";
-      setTimeout(() => (authStatus.textContent = ""), 1500);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${created}</td>
+        <td><span class="pill">${row.package || "-"}</span></td>
+        <td>${row.phone || "-"}</td>
+        <td>${link}</td>
+        <td>${receipt}</td>
+        <td>${notes}</td>
+      `;
+      ordersBody.appendChild(tr);
     });
 
-    ordersEl.appendChild(item);
-  });
-}
-
-function showAuth() {
-  authBox.classList.remove("hidden");
-  panel.classList.add("hidden");
-}
-
-function showPanel() {
-  authBox.classList.add("hidden");
-  panel.classList.remove("hidden");
-}
-
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-// On load: check session
-(async function init() {
-  const { data } = await supabase.auth.getSession();
-  if (data?.session) {
-    showPanel();
-    await refresh();
-  } else {
-    showAuth();
+    adminMsg.textContent = `Loaded ${data.length} orders ✅`;
+  } catch (e) {
+    console.error(e);
+    ordersBody.innerHTML = `<tr><td colspan="6">Error: ${(e.message || "unknown")}</td></tr>`;
+    adminMsg.textContent =
+      "❗ SELECT မရရင် RLS policy ကို authenticated only ပြောင်းထားပြီး login မဝင်နိုင်တာ ဖြစ်နိုင်ပါတယ်။";
   }
-})();
+}
+
+// init
+loadSession();
