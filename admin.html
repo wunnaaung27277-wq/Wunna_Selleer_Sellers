@@ -1,69 +1,81 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Admin • Wunna Seller</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="./styles.css"/>
 </head>
 <body>
-  <div class="bg"></div>
-
-  <main class="container">
-    <header class="topbar">
+  <div class="container adminWrap">
+    <div class="topbar">
       <div class="brand">
-        <div class="logoBlob" aria-hidden="true"></div>
+        <div class="logoWrap" aria-hidden="true"><div class="logo">AD</div></div>
         <div>
-          <div class="brandTitle">Admin Panel</div>
-          <div class="brandSub">Login required</div>
+          <div class="h1">Admin Dashboard</div>
+          <div class="sub">Login required (Supabase Auth)</div>
         </div>
       </div>
-      <a class="linkBtn" href="index.html">User Site</a>
-    </header>
+      <a class="btn btnGhost btnSmall" href="./index.html">User Site</a>
+    </div>
 
-    <section class="card">
-      <div id="authBox">
-        <h2 class="sectionTitle">Admin Login</h2>
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
+      <div class="sectionTitle" style="margin-top:0">Admin Login</div>
 
-        <div class="field">
-          <label>Email</label>
-          <input id="email" type="email" placeholder="admin@email.com"/>
-        </div>
-
-        <div class="field">
-          <label>Password</label>
-          <input id="password" type="password" placeholder="••••••••"/>
-        </div>
-
-        <div class="actions">
-          <span id="authStatus" class="status"></span>
-          <div class="rightActions">
-            <button id="loginBtn" class="primaryBtn">Login</button>
-          </div>
-        </div>
+      <div class="field">
+        <label>Admin Email</label>
+        <input id="adminEmail" class="input" type="email" value="wunnaaung27277@gmail.com"/>
       </div>
 
-      <div id="panel" class="hidden">
-        <div class="panelHead">
-          <h2 class="sectionTitle">Orders List</h2>
-          <div class="panelBtns">
-            <button id="refreshBtn" class="ghostBtn" type="button">Refresh</button>
-            <button id="logoutBtn" class="dangerBtn" type="button">Logout</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Search</label>
-          <input id="search" placeholder="Search phone / package..." />
-        </div>
-
-        <div id="orders" class="orders"></div>
-        <div id="empty" class="empty hidden">No orders yet.</div>
+      <div class="field">
+        <label>Password</label>
+        <input id="adminPassword" class="input" type="password" value="212026"/>
       </div>
-    </section>
-  </main>
+
+      <div class="row" style="margin-top:12px">
+        <button class="btn btnPrimary" id="loginBtn">Login</button>
+        <button class="btn btnGhost" id="logoutBtn" style="display:none">Logout</button>
+      </div>
+
+      <div class="helper" id="loginStatus">Tip: Supabase Auth → Users မှာ ဒီ email/password ကို create ထားရပါမယ်။</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="card" id="dashCard" style="display:none">
+      <div class="row" style="justify-content:space-between; margin-bottom:10px">
+        <div>
+          <div class="sectionTitle" style="margin:0">Orders</div>
+          <div class="sub" id="meLabel">Signed in</div>
+        </div>
+        <button class="btn btnGhost btnSmall" id="refreshBtn">Refresh</button>
+      </div>
+
+      <div style="overflow:auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Package</th>
+              <th>Phone</th>
+              <th>Contact Link</th>
+              <th>Receipt</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody">
+            <tr><td colspan="6">No data</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="helper" id="adminMsg"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied</div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="admin.js"></script>
+  <script src="./admin.js"></script>
 </body>
 </html>
