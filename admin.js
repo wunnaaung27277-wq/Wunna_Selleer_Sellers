@@ -4,7 +4,37 @@
 const SUPABASE_URL = "https://fptldpkahsxifzxmzvjd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_29Mtd0gHH03lSTbJF6YEww_kuRE-nHC";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const receiptModal = document.getElementById("receiptModal");
+const receiptImg = document.getElementById("receiptImg");
+const receiptOpenNew = document.getElementById("receiptOpenNew");
+const receiptCopyLink = document.getElementById("receiptCopyLink");
+const receiptClose = document.getElementById("receiptClose");
+const receiptCloseBtn = document.getElementById("receiptCloseBtn");
 
+function openReceipt(url){
+  if(!url) return alert("No receipt url");
+  receiptImg.src = url;
+  receiptOpenNew.href = url;
+  receiptModal.style.display = "block";
+}
+
+function closeReceipt(){
+  receiptImg.src = "";
+  receiptOpenNew.href = "#";
+  receiptModal.style.display = "none";
+}
+
+receiptClose.addEventListener("click", closeReceipt);
+receiptCloseBtn.addEventListener("click", closeReceipt);
+
+receiptCopyLink.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(receiptOpenNew.href);
+    alert("Copied ✅");
+  } catch {
+    alert("Copy failed ❗");
+  }
+});
 // =====================
 // 2) UI elements
 // =====================

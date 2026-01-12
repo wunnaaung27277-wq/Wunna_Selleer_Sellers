@@ -62,5 +62,25 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./admin.js"></script>
+  <!-- Receipt Modal -->
+<div class="modal" id="receiptModal" style="display:none;">
+  <div class="modalBackdrop" id="receiptClose"></div>
+  <div class="modalCard">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div style="font-weight:700;">Receipt Preview</div>
+      <button class="btn btnSmall btnGhost" id="receiptCloseBtn">Close</button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <img id="receiptImg" src="" alt="Receipt" style="width:100%; border-radius:14px; display:block;" />
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:10px;">
+      <a class="btn btnSmall" id="receiptOpenNew" href="#" target="_blank">Open in new tab</a>
+      <button class="btn btnSmall btnGhost" id="receiptCopyLink">Copy link</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
+
