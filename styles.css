@@ -334,3 +334,6 @@ a{color:inherit}
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.06);
 }
+.btn { pointer-events: auto; }
+.btnDisabled { pointer-events: none; opacity: .5; }
+.footerBar, .container, .card { pointer-events: auto; }

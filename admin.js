@@ -38,13 +38,31 @@ receiptCopyLink.addEventListener("click", async () => {
 // =====================
 // 2) UI elements
 // =====================
-const loginCard = document.getElementById("loginCard");
-const adminPanel = document.getElementById("adminPanel");
+loginBtn.addEventListener("click", async () => {
+  loginMsg.textContent = "Logging in...";
 
-const adminEmail = document.getElementById("adminEmail");
-const adminPassword = document.getElementById("adminPassword");
-const loginBtn = document.getElementById("loginBtn");
-const loginMsg = document.getElementById("loginMsg");
+  const email = adminEmail.value.trim();
+  const password = adminPassword.value;
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    loginMsg.textContent = "Login failed: " + error.message;
+    return;
+  }
+
+  loginMsg.textContent = "Login success ✅";
+
+  // UI switch
+  loginCard.style.display = "none";
+  adminPanel.style.display = "block";
+
+  // orders load
+  loadOrders();
+});
 
 const refreshBtn = document.getElementById("refreshBtn");
 const logoutBtn = document.getElementById("logoutBtn");
