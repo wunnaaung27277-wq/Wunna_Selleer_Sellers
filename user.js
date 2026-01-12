@@ -169,35 +169,28 @@ async function uploadReceiptToSupabase(file) {
   const safeExt = ext.replace(/[^a-z0-9]/g, "");
   const path = `receipts/${Date.now()}_${Math.random().toString(16).slice(2)}.${safeExt}`;
 
+  // ⬇️ ဒီနေရာက bucket name ကို "receipt" လို့ ပြင်ထားတာ
   const { error: upErr } = await supabaseClient
     .storage
-    .from("receipts")
+    .from("receipt")
     .upload(path, file, { upsert: false });
 
   if (upErr) {
     throw new Error("Receipt upload failed: " + upErr.message);
   }
 
-  const { data } = supabaseClient.storage.from("receipts").getPublicUrl(path);
-  if (!data?.publicUrl) throw new Error("Failed to get public URL");
-  return data.publicUrl;
-}
+  // ⬇️ public URL
+  const { data } = supabaseClient
+    .storage
+    .from("receipt")
+    .getPublicUrl(path);
 
-async function insertOrder(rowObj) {
-  const { error } = await supabaseClient.from("Orders").insert([rowObj]);
-  if (error) throw new Error("Insert failed: " + error.message);
-}
-
-confirmBtn.addEventListener("click", async () => {
-  validateForm();
-  if (confirmBtn.disabled) {
-    showToast("Fill required fields ❗");
-    return;
+  if (!data?.publicUrl) {
+    throw new Error("Failed to get public URL");
   }
 
-  confirmBtn.textContent = "Saving...";
-  setConfirmEnabled(false);
-
+  return data.publicUrl;
+}
   try {
     // 1) upload receipt
     uploadStatus.textContent = "Uploading receipt...";
