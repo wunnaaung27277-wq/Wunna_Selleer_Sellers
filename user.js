@@ -225,9 +225,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================
   // 9) Go admin
   // =====================
-  goAdminBtn.addEventListener("click", () => {
-    location.href = "./admin.html";
-  });
+  // hide admin link/button in user page
+const topAdminLink = document.querySelector('a[href="./admin.html"]');
+if (topAdminLink) topAdminLink.style.display = "none";
+if (goAdminBtn) goAdminBtn.style.display = "none";
 
   // Live validation
   phoneEl.addEventListener("input", validateForm);
