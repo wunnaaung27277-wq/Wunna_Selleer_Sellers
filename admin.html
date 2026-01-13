@@ -7,10 +7,15 @@
   <link rel="stylesheet" href="./styles.css"/>
 </head>
 <body>
+  <div class="bgGlow"></div>
+
   <div class="container">
     <div class="topbar">
       <div class="brand">
-        <div class="logoWrap" aria-hidden="true"><div class="logo">WS</div></div>
+        <div class="logoWrap" aria-hidden="true">
+          <div class="logoPulse"></div>
+          <div class="logo">WS</div>
+        </div>
         <div>
           <div class="h1">Wunna Seller • Admin</div>
           <div class="sub">Login required</div>
@@ -20,40 +25,63 @@
     </div>
 
     <!-- LOGIN CARD -->
-<div class="card" id="loginCard">
-  <h3>ADMIN LOGIN</h3>
+    <div class="card" id="loginCard">
+      <div class="sectionTitle" style="margin-top:0;">Admin Login</div>
 
-  <label>Email</label>
-  <input id="adminEmail" type="email" placeholder="admin email" />
+      <div class="field">
+        <label>Email</label>
+        <input id="adminEmail" class="input" type="email" value="wunnaaung27277@gmail.com" />
+      </div>
 
-  <label>Password</label>
-  <input id="adminPassword" type="password" placeholder="password" />
+      <div class="field">
+        <label>Password</label>
+        <input id="adminPassword" class="input" type="password" value="212026" />
+      </div>
 
-  <div id="loginMsg" class="helper"></div>
+      <div class="row" style="justify-content:flex-end;">
+        <button class="btn btnPrimary" id="loginBtn" type="button">Login</button>
+      </div>
 
-  <button id="loginBtn" type="button" class="btn btnPrimary">
-    Login
-  </button>
-</div>
-
-      <div class="helper" id="loginMsg" style="margin-top:10px;opacity:.85"></div>
+      <div class="helper" id="loginMsg"></div>
     </div>
 
     <!-- ADMIN PANEL -->
-    <div class="card" id="adminPanel" style="display:none">
-      <div class="row" style="justify-content:space-between;align-items:center">
+    <div class="card hidden" id="adminPanel">
+      <div class="row" style="justify-content:space-between; align-items:center;">
         <div>
-          <div class="sectionTitle" style="margin:0">Orders</div>
-          <div class="helper" id="countText" style="margin-top:6px">Loading…</div>
+          <div class="sectionTitle" style="margin-top:0;">Orders</div>
+          <div class="helper" id="countText">Total: 0</div>
         </div>
-        <div class="row" style="gap:10px">
-          <button class="btn btnGhost btnSmall" id="refreshBtn">Refresh</button>
-          <button class="btn btnSmall" id="logoutBtn">Logout</button>
+        <div class="row" style="gap:10px;">
+          <button class="btn btnSmall" id="refreshBtn" type="button">Refresh</button>
+          <button class="btn btnGhost btnSmall" id="logoutBtn" type="button">Logout</button>
         </div>
       </div>
 
-      <div id="ordersList" style="margin-top:14px;display:grid;gap:12px"></div>
-      <div class="helper" id="adminMsg" style="margin-top:12px"></div>
+      <div class="row" style="gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button class="chip chipOn" id="filterAll" type="button">All</button>
+        <button class="chip" id="filterPending" type="button">🟢 Pending</button>
+        <button class="chip" id="filterDone" type="button">✅ Done</button>
+      </div>
+
+      <div class="dashGrid">
+        <div class="dashCard">
+          <div class="dashLabel">Pending</div>
+          <div class="dashValue" id="sumPending">0</div>
+        </div>
+        <div class="dashCard">
+          <div class="dashLabel">Done</div>
+          <div class="dashValue" id="sumDone">0</div>
+        </div>
+        <div class="dashCard">
+          <div class="dashLabel">Total</div>
+          <div class="dashValue" id="sumTotal">0</div>
+        </div>
+      </div>
+
+      <div class="helper" id="adminMsg"></div>
+
+      <div id="ordersList" class="ordersList"></div>
     </div>
   </div>
 
@@ -61,25 +89,5 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./admin.js"></script>
-  <!-- Receipt Modal -->
-<div class="modal" id="receiptModal" style="display:none;">
-  <div class="modalBackdrop" id="receiptClose"></div>
-  <div class="modalCard">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-      <div style="font-weight:700;">Receipt Preview</div>
-      <button class="btn btnSmall btnGhost" id="receiptCloseBtn">Close</button>
-    </div>
-
-    <div style="margin-top:12px;">
-      <img id="receiptImg" src="" alt="Receipt" style="width:100%; border-radius:14px; display:block;" />
-    </div>
-
-    <div style="margin-top:12px; display:flex; gap:10px;">
-      <a class="btn btnSmall" id="receiptOpenNew" href="#" target="_blank">Open in new tab</a>
-      <button class="btn btnSmall btnGhost" id="receiptCopyLink">Copy link</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
-

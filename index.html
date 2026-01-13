@@ -7,10 +7,13 @@
   <link rel="stylesheet" href="./styles.css"/>
 </head>
 <body>
+  <div class="bgGlow"></div>
+
   <div class="container">
     <div class="topbar">
       <div class="brand">
         <div class="logoWrap" aria-hidden="true">
+          <div class="logoPulse"></div>
           <div class="logo">WS</div>
         </div>
         <div>
@@ -25,7 +28,9 @@
     <div class="card">
       <div class="payHeader">
         <div class="kBadge">
-          <div class="kIcon"><span>K</span></div>
+          <div class="kIcon">
+            <span class="kAnim">K</span>
+          </div>
           <div class="kText">
             <div class="label">PAY TYPE</div>
             <div class="value">Kpay only</div>
@@ -38,7 +43,7 @@
         <label>Kpay Name</label>
         <div class="row">
           <input id="kpayName" class="input" type="text" readonly value="Ma May Thet Oo"/>
-          <button class="btn btnSmall" id="copyNameBtn">Copy</button>
+          <button class="btn btnSmall" id="copyNameBtn" type="button">Copy</button>
         </div>
       </div>
 
@@ -46,7 +51,7 @@
         <label>Kpay No</label>
         <div class="row">
           <input id="kpayNo" class="input" type="text" readonly value="09775767821"/>
-          <button class="btn btnSmall" id="copyNoBtn">Copy</button>
+          <button class="btn btnSmall" id="copyNoBtn" type="button">Copy</button>
         </div>
       </div>
 
@@ -55,39 +60,39 @@
 
     <!-- PACKAGES -->
     <div class="sectionTitle">Service Packages</div>
-    <div class="packWrap">
-      <div class="pkg" data-package="Kpay Only" data-price="200000">
+    <div class="packWrap" id="packWrap">
+      <button class="pkg" type="button" data-package="Kpay Only" data-price="200000">
         <div class="left">
           <div class="name">Kpay Only</div>
           <div class="price">200,000 MMK</div>
         </div>
         <div class="badge">Popular</div>
-      </div>
+      </button>
 
-      <div class="pkg" data-package="Kpay + Wave" data-price="250000">
+      <button class="pkg" type="button" data-package="Kpay + Wave" data-price="250000">
         <div class="left">
           <div class="name">Kpay + Wave</div>
           <div class="price">250,000 MMK</div>
         </div>
-        <div class="badge">Combo</div>
-      </div>
+        <div class="badge badge2">Combo</div>
+      </button>
     </div>
 
-    <div id="pkgHint" class="slideHint">
-      <p>✅ Package selected</p>
+    <div id="pkgHint" class="slideHint" aria-live="polite">
+      ✅ Package selected
     </div>
 
     <!-- FORM -->
     <div class="sectionTitle">Your Info</div>
     <div class="card">
       <div class="field">
-        <label>Enter phone number for Kpay registration. <span style="opacity:.7">(required)</span></label>
-        <input id="phone" class="input" type="tel" placeholder="09xxxxxxxxx"/>
+        <label>Enter phone number for Kpay registration. <span class="muted">(required)</span></label>
+        <input id="phone" class="input" type="tel" inputmode="numeric" placeholder="09xxxxxxxxx"/>
         <div class="helper">Example: 09xxxxxxxxx</div>
       </div>
 
       <div class="field">
-        <label>User Telegram or Facebook link <span style="opacity:.7">(required)</span></label>
+        <label>User Telegram or Facebook link <span class="muted">(required)</span></label>
         <input id="contactLink" class="input" type="text" placeholder="https://t.me/username or https://facebook.com/..." />
         <div class="helper">Telegram / Facebook link ထည့်ပေးပါ။</div>
       </div>
@@ -98,15 +103,15 @@
       </div>
 
       <div class="field">
-        <label>Upload screenshot/receipt <span style="opacity:.7">(required)</span></label>
+        <label>Upload screenshot/receipt <span class="muted">(required)</span></label>
         <div class="uploadBox">
           <div class="uploadRow">
-            <div>
+            <div class="fileCol">
               <input id="receipt" type="file" accept="image/*"/>
               <div class="mini" id="fileLabel">PNG/JPG recommended</div>
             </div>
             <div class="thumb" id="thumb">
-              <span style="opacity:.7;font-size:12px;">No preview</span>
+              <span class="mini muted">No preview</span>
             </div>
           </div>
         </div>
@@ -115,17 +120,16 @@
     </div>
   </div>
 
-  <!-- bottom fixed buttons (Confirm မပေါ်တာကို ဒီနည်းနဲ့ fix) -->
+  <!-- fixed footer -->
   <div class="footerBar">
     <div class="footerInner">
-      <button class="btn btnGhost" id="goAdminBtn">Go to Admin</button>
-      <button class="btn btnPrimary btnDisabled" id="confirmBtn">Confirm</button>
+      <button class="btn btnGhost" id="goAdminBtn" type="button">Go to Admin</button>
+      <button class="btn btnPrimary btnDisabled" id="confirmBtn" type="button">Confirm</button>
     </div>
   </div>
 
   <div class="toast" id="toast">Copied</div>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./user.js"></script>
 </body>

@@ -1,301 +1,296 @@
-// =====================
-// 1) Supabase config
-// =====================
-const SUPABASE_URL = "https://fptldpkahsxifzxmzvjd.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_29Mtd0gHH03lSTbJF6YEww_kuRE-nHC";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const receiptModal = document.getElementById("receiptModal");
-const receiptImg = document.getElementById("receiptImg");
-const receiptOpenNew = document.getElementById("receiptOpenNew");
-const receiptCopyLink = document.getElementById("receiptCopyLink");
-const receiptClose = document.getElementById("receiptClose");
-const receiptCloseBtn = document.getElementById("receiptCloseBtn");
+document.addEventListener("DOMContentLoaded", () => {
+  // =====================
+  // 1) Supabase config
+  // =====================
+  const SUPABASE_URL = "https://fptldpkahsxifzxmzvjd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_29Mtd0gHH03lSTbJF6YEww_kuRE-nHC";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function openReceipt(url){
-  if(!url) return alert("No receipt url");
-  receiptImg.src = url;
-  receiptOpenNew.href = url;
-  receiptModal.style.display = "block";
-}
+  // =====================
+  // 2) UI elements
+  // =====================
+  const loginCard = document.getElementById("loginCard");
+  const adminPanel = document.getElementById("adminPanel");
 
-function closeReceipt(){
-  receiptImg.src = "";
-  receiptOpenNew.href = "#";
-  receiptModal.style.display = "none";
-}
+  const adminEmail = document.getElementById("adminEmail");
+  const adminPassword = document.getElementById("adminPassword");
+  const loginBtn = document.getElementById("loginBtn");
+  const loginMsg = document.getElementById("loginMsg");
 
-receiptClose.addEventListener("click", closeReceipt);
-receiptCloseBtn.addEventListener("click", closeReceipt);
+  const refreshBtn = document.getElementById("refreshBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-receiptCopyLink.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(receiptOpenNew.href);
-    alert("Copied ✅");
-  } catch {
-    alert("Copy failed ❗");
+  const ordersList = document.getElementById("ordersList");
+  const adminMsg = document.getElementById("adminMsg");
+  const countText = document.getElementById("countText");
+
+  const filterAll = document.getElementById("filterAll");
+  const filterPending = document.getElementById("filterPending");
+  const filterDone = document.getElementById("filterDone");
+
+  const sumPending = document.getElementById("sumPending");
+  const sumDone = document.getElementById("sumDone");
+  const sumTotal = document.getElementById("sumTotal");
+
+  const toast = document.getElementById("toast");
+
+  // =====================
+  // 3) State
+  // =====================
+  let currentFilter = "all"; // all | pending | done
+
+  // =====================
+  // 4) Helpers
+  // =====================
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1200);
   }
-});
-// =====================
-// 2) UI elements
-// =====================
-loginBtn.addEventListener("click", async () => {
-  loginMsg.textContent = "Logging in...";
 
-  const email = adminEmail.value.trim();
-  const password = adminPassword.value;
+  function escapeHtml(s) {
+    return (s ?? "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password,
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleString();
+    } catch {
+      return iso || "";
+    }
+  }
+
+  function setFilterUI() {
+    [filterAll, filterPending, filterDone].forEach(b => b.classList.remove("chipOn"));
+    if (currentFilter === "all") filterAll.classList.add("chipOn");
+    if (currentFilter === "pending") filterPending.classList.add("chipOn");
+    if (currentFilter === "done") filterDone.classList.add("chipOn");
+  }
+
+  function showLogin() {
+    loginCard.classList.remove("hidden");
+    adminPanel.classList.add("hidden");
+  }
+
+  function showAdmin() {
+    loginCard.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
+  }
+
+  // =====================
+  // 5) Session check (auto show orders if already logged)
+  // =====================
+  async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data?.session) {
+      showAdmin();
+      await loadOrders();
+    } else {
+      showLogin();
+    }
+  }
+
+  // =====================
+  // 6) Login / Logout
+  // =====================
+  loginBtn.addEventListener("click", async () => {
+    loginMsg.textContent = "Logging in...";
+    loginBtn.classList.add("btnDisabled");
+
+    try {
+      const email = adminEmail.value.trim();
+      const password = adminPassword.value;
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      loginMsg.textContent = "Login success ✅";
+      showToast("Login ✅");
+
+      showAdmin();
+      await loadOrders();
+    } catch (e) {
+      loginMsg.textContent = "Login failed: " + (e?.message || "Unknown error");
+      showToast("Login failed ❗");
+    } finally {
+      loginBtn.classList.remove("btnDisabled");
+    }
   });
 
-  if (error) {
-    loginMsg.textContent = "Login failed: " + error.message;
-    return;
-  }
+  logoutBtn.addEventListener("click", async () => {
+    await supabaseClient.auth.signOut();
+    showToast("Logged out");
+    showLogin();
+  });
 
-  loginMsg.textContent = "Login success ✅";
-
-  // UI switch
-  loginCard.style.display = "none";
-  adminPanel.style.display = "block";
-
-  // orders load
-  loadOrders();
-});
-
-const refreshBtn = document.getElementById("refreshBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-
-const ordersList = document.getElementById("ordersList");
-const adminMsg = document.getElementById("adminMsg");
-const countText = document.getElementById("countText");
-
-const toast = document.getElementById("toast");
-
-// =====================
-// 3) Helpers
-// =====================
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 1200);
-}
-
-function escapeHtml(s) {
-  return (s ?? "").toString()
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function fmtMMK(n) {
-  const x = Number(n || 0);
-  return x ? x.toLocaleString("en-US") + " MMK" : "-";
-}
-
-function fmtDate(d) {
-  if (!d) return "-";
-  try { return new Date(d).toLocaleString(); } catch { return d; }
-}
-
-function setLoggedInUI(isLoggedIn) {
-  loginCard.style.display = isLoggedIn ? "none" : "block";
-  adminPanel.style.display = isLoggedIn ? "block" : "none";
-}
-
-// =====================
-// 4) Auth
-// =====================
-async function ensureSessionUI() {
-  const { data } = await supabaseClient.auth.getSession();
-  if (data?.session) {
-    setLoggedInUI(true);
-    await loadOrders();
-  } else {
-    setLoggedInUI(false);
-  }
-}
-
-loginBtn.addEventListener("click", async () => {
-  loginMsg.textContent = "";
-  adminMsg.textContent = "";
-
-  const email = (adminEmail.value || "").trim();
-  const password = (adminPassword.value || "").trim();
-
-  if (!email || !password) {
-    loginMsg.textContent = "Please enter email + password.";
-    return;
-  }
-
-  loginBtn.textContent = "Logging in…";
-  loginBtn.disabled = true;
-
-  try {
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-
-    showToast("Logged in ✅");
-    setLoggedInUI(true);
-    await loadOrders();
-  } catch (e) {
-    loginMsg.textContent = "Login failed: " + (e.message || "Unknown error");
-    showToast("Login error ❗");
-  } finally {
-    loginBtn.textContent = "Login";
-    loginBtn.disabled = false;
-  }
-});
-
-logoutBtn.addEventListener("click", async () => {
-  await supabaseClient.auth.signOut();
-  ordersList.innerHTML = "";
-  showToast("Logged out");
-  setLoggedInUI(false);
-});
-
-// keep UI in sync
-supabaseClient.auth.onAuthStateChange((_event, session) => {
-  if (session) setLoggedInUI(true);
-  else setLoggedInUI(false);
-});
-
-// =====================
-// 5) Orders CRUD
-// =====================
-async function loadOrders() {
-  adminMsg.textContent = "Loading orders…";
-  countText.textContent = "Loading…";
-  ordersList.innerHTML = "";
-
-  try {
-    // RLS will allow ONLY admins (authenticated + in public.admins)
+  // =====================
+  // 7) Load orders
+  // =====================
+  async function fetchOrders() {
+    // RLS requires you to be an ADMIN (in public.admins table)
     const { data, error } = await supabaseClient
       .from("Orders")
-      .select("*")
+      .select("id, package, price, phone, contact_link, notes, receipt_url, status, created_at")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
+    return data || [];
+  }
 
-    const rows = data || [];
-    countText.textContent = `Total: ${rows.length}`;
+  function applyFilter(list) {
+    if (currentFilter === "pending") return list.filter(x => x.status === "pending");
+    if (currentFilter === "done") return list.filter(x => x.status === "done");
+    return list;
+  }
 
-    if (!rows.length) {
-      adminMsg.textContent = "No orders yet.";
-      return;
+  async function loadOrders() {
+    adminMsg.textContent = "Loading...";
+    ordersList.innerHTML = "";
+
+    try {
+      const all = await fetchOrders();
+
+      const pendingCount = all.filter(x => x.status === "pending").length;
+      const doneCount = all.filter(x => x.status === "done").length;
+
+      sumPending.textContent = pendingCount;
+      sumDone.textContent = doneCount;
+      sumTotal.textContent = all.length;
+
+      const filtered = applyFilter(all);
+      countText.textContent = `Total: ${filtered.length}`;
+
+      if (filtered.length === 0) {
+        ordersList.innerHTML = `<div class="helper">No orders</div>`;
+        adminMsg.textContent = "";
+        return;
+      }
+
+      ordersList.innerHTML = filtered.map(o => renderOrderCard(o)).join("");
+      adminMsg.textContent = "";
+      bindOrderActions();
+    } catch (e) {
+      console.error(e);
+      adminMsg.textContent = "Error: " + (e?.message || "Unknown error") + " (Check: you added your user_id into public.admins table?)";
+      showToast("Error ❗");
     }
-
-    ordersList.innerHTML = rows.map(r => renderOrderCard(r)).join("");
-    adminMsg.textContent = "";
-    wireCardButtons();
-  } catch (e) {
-    adminMsg.textContent = "Error: " + (e.message || "Unknown error");
   }
-}
 
-function renderOrderCard(r) {
-  const id = escapeHtml(r.id);
-  const pkg = escapeHtml(r.package);
-  const phone = escapeHtml(r.phone);
-  const link = escapeHtml(r.contact_link);
-  const notes = escapeHtml(r.notes);
-  const price = fmtMMK(r.price);
-  const status = escapeHtml(r.status || "pending");
-  const created = escapeHtml(fmtDate(r.created_at));
-  const receipt = escapeHtml(r.receipt_url || "");
+  function renderOrderCard(o) {
+    const pkg = escapeHtml(o.package);
+    const phone = escapeHtml(o.phone);
+    const link = escapeHtml(o.contact_link);
+    const notes = escapeHtml(o.notes || "");
+    const status = escapeHtml(o.status);
+    const date = escapeHtml(formatDate(o.created_at));
+    const price = Number(o.price || 0).toLocaleString();
 
-  return `
-  <div class="card" style="padding:14px" data-id="${id}">
-    <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">
-      <div>
-        <div style="font-weight:800;font-size:18px">${pkg} <span style="opacity:.7;font-weight:600">(${price})</span></div>
-        <div class="helper" style="margin-top:6px">
-          <b>Status:</b> ${status} • <b>Date:</b> ${created}
+    const receiptUrl = o.receipt_url || "";
+    const canView = receiptUrl ? `<a class="btn btnSmall" href="${receiptUrl}" target="_blank" rel="noreferrer">View receipt</a>` : "";
+
+    return `
+      <div class="orderCard" data-id="${o.id}">
+        <div class="orderTop">
+          <div class="orderTitle">${pkg} <span class="muted">(${price} MMK)</span></div>
+          <div class="statusTag ${status === "done" ? "statusDone" : "statusPending"}">${status}</div>
         </div>
-        <div class="helper" style="margin-top:6px"><b>Phone:</b> ${phone}</div>
-        <div class="helper" style="margin-top:6px"><b>Contact:</b> ${link || "-"}</div>
-        <div class="helper" style="margin-top:6px"><b>Notes:</b> ${notes || "-"}</div>
+
+        <div class="orderMeta">
+          <div><span class="muted">Date:</span> ${date}</div>
+          <div><span class="muted">Phone:</span> ${phone}</div>
+          <div><span class="muted">Contact:</span> ${link}</div>
+          ${notes ? `<div><span class="muted">Notes:</span> ${notes}</div>` : ""}
+        </div>
+
+        <div class="orderActions">
+          ${canView}
+          <button class="btn btnSmall actDone" type="button">Mark done</button>
+          <button class="btn btnSmall actPending" type="button">Mark pending</button>
+          <button class="btn btnSmall btnDanger actDelete" type="button">Delete</button>
+        </div>
       </div>
-
-      <div style="display:flex;flex-direction:column;gap:10px;min-width:140px">
-        ${receipt ? `
-          <a class="btn btnGhost btnSmall" target="_blank" rel="noopener" href="${receipt}">View receipt</a>
-        ` : `<div class="helper" style="opacity:.7">No receipt</div>`}
-
-        <button class="btn btnSmall" data-action="done">Mark done</button>
-        <button class="btn btnSmall" data-action="pending">Mark pending</button>
-        <button class="btn btnSmall" data-action="delete" style="opacity:.95">Delete</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function wireCardButtons() {
-  document.querySelectorAll('[data-action="done"]').forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const card = btn.closest("[data-id]");
-      const id = card.getAttribute("data-id");
-      await updateStatus(id, "done");
-    });
-  });
-
-  document.querySelectorAll('[data-action="pending"]').forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const card = btn.closest("[data-id]");
-      const id = card.getAttribute("data-id");
-      await updateStatus(id, "pending");
-    });
-  });
-
-  document.querySelectorAll('[data-action="delete"]').forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const card = btn.closest("[data-id]");
-      const id = card.getAttribute("data-id");
-      const ok = confirm("Delete this order? (cannot undo)");
-      if (!ok) return;
-      await deleteOrder(id);
-    });
-  });
-}
-
-async function updateStatus(id, status) {
-  adminMsg.textContent = "Updating…";
-  try {
-    const { error } = await supabaseClient
-      .from("Orders")
-      .update({ status })
-      .eq("id", id);
-
-    if (error) throw error;
-    showToast("Updated ✅");
-    await loadOrders();
-  } catch (e) {
-    adminMsg.textContent = "Update error: " + (e.message || "Unknown error");
-    showToast("Error ❗");
+    `;
   }
-}
 
-async function deleteOrder(id) {
-  adminMsg.textContent = "Deleting…";
-  try {
-    const { error } = await supabaseClient
-      .from("Orders")
-      .delete()
-      .eq("id", id);
+  function bindOrderActions() {
+    const cards = Array.from(document.querySelectorAll(".orderCard"));
+    cards.forEach(card => {
+      const id = card.getAttribute("data-id");
+      const btnDone = card.querySelector(".actDone");
+      const btnPending = card.querySelector(".actPending");
+      const btnDelete = card.querySelector(".actDelete");
 
-    if (error) throw error;
-    showToast("Deleted ✅");
-    await loadOrders();
-  } catch (e) {
-    adminMsg.textContent = "Delete error: " + (e.message || "Unknown error");
-    showToast("Error ❗");
+      btnDone.addEventListener("click", async () => {
+        await updateStatus(id, "done");
+      });
+
+      btnPending.addEventListener("click", async () => {
+        await updateStatus(id, "pending");
+      });
+
+      btnDelete.addEventListener("click", async () => {
+        const ok = confirm("Delete this order? (cannot undo)");
+        if (!ok) return;
+        await deleteOrder(id);
+      });
+    });
   }
-}
 
-refreshBtn.addEventListener("click", loadOrders);
+  async function updateStatus(id, status) {
+    try {
+      const { error } = await supabaseClient.from("Orders").update({ status }).eq("id", id);
+      if (error) throw error;
+      showToast("Updated ✅");
+      await loadOrders();
+    } catch (e) {
+      console.error(e);
+      showToast("Update failed ❗");
+      adminMsg.textContent = "Error: " + (e?.message || "Unknown error");
+    }
+  }
 
-// init
-ensureSessionUI();
+  async function deleteOrder(id) {
+    try {
+      const { error } = await supabaseClient.from("Orders").delete().eq("id", id);
+      if (error) throw error;
+      showToast("Deleted ✅");
+      await loadOrders();
+    } catch (e) {
+      console.error(e);
+      showToast("Delete failed ❗");
+      adminMsg.textContent = "Error: " + (e?.message || "Unknown error");
+    }
+  }
+
+  // =====================
+  // 8) Filter + Refresh
+  // =====================
+  filterAll.addEventListener("click", async () => {
+    currentFilter = "all";
+    setFilterUI();
+    await loadOrders();
+  });
+
+  filterPending.addEventListener("click", async () => {
+    currentFilter = "pending";
+    setFilterUI();
+    await loadOrders();
+  });
+
+  filterDone.addEventListener("click", async () => {
+    currentFilter = "done";
+    setFilterUI();
+    await loadOrders();
+  });
+
+  refreshBtn.addEventListener("click", loadOrders);
+
+  // init
+  setFilterUI();
+  checkSession();
+});
